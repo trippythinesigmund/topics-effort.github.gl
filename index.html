@@ -1,31 +1,87 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Minecraft Server Status</title>
+  <meta charset="UTF-8">
+  <title>Minecraft Server Status Checker</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background-color: #f0f0f0;
+    }
+    h1 {
+      margin-bottom: 0;
+    }
+    h4 {
+      margin-top: 5px;
+      color: rgba(0,0,0,0.48); /* greyed out */
+      font-weight: normal;
+    }
+    #status-box {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 10px;
+      transition: background-color 0.3s;
+    }
+    #players-list {
+      margin-top: 10px;
+      padding-left: 20px;
+    }
+  </style>
 </head>
 <body>
 
-<h1>Minecraft Server</h1>
+<h1>Minecraft Server Status Checker</h1>
+<h4>(for pul's server)</h4>
 
-<p id="status">Checking status...</p>
-<p id="players"></p>
+<div id="status-box">
+  <p id="status">Checking server...</p>
+  <p id="players-count"></p>
+  <ul id="players-list"></ul>
+</div>
 
 <script>
-const serverIP = "topics-effort.gl.joinmc.link"; // change this
+const serverIP = "YOUR_SERVER_IP_OR_HOSTNAME:25565"; // replace this with your server
 
 fetch(`https://api.mcstatus.io/v2/status/java/${serverIP}`)
   .then(res => res.json())
   .then(data => {
-    if (data.online) {
-      document.getElementById("status").textContent = "🟢 Server is ONLINE";
-      document.getElementById("players").textContent =
-        `Players: ${data.players.online} / ${data.players.max}`;
+    const statusBox = document.getElementById("status-box");
+    const statusText = document.getElementById("status");
+    const playersCount = document.getElementById("players-count");
+    const playersList = document.getElementById("players-list");
+    
+    if(data.online) {
+      statusBox.style.backgroundColor = "#d4f8d4"; // light green
+      statusText.textContent = "🟢 Server is ONLINE";
+      
+      playersCount.textContent = `Players: ${data.players.online} / ${data.players.max}`;
+      
+      // Show player names if available
+      playersList.innerHTML = "";
+      if(data.players.list && data.players.list.length > 0) {
+        data.players.list.forEach(player => {
+          const li = document.createElement("li");
+          li.textContent = player.name;
+          playersList.appendChild(li);
+        });
+      } else {
+        playersList.innerHTML = "<li>No players online</li>";
+      }
+      
     } else {
-      document.getElementById("status").textContent = "🔴 Server is OFFLINE";
+      statusBox.style.backgroundColor = "#f8d4d4"; // light red
+      statusText.textContent = "🔴 Server is OFFLINE";
+      playersCount.textContent = "";
+      playersList.innerHTML = "";
     }
   })
   .catch(() => {
+    const statusBox = document.getElementById("status-box");
+    statusBox.style.backgroundColor = "#f8d4d4";
     document.getElementById("status").textContent = "🔴 Server is OFFLINE";
+    document.getElementById("players-count").textContent = "";
+    document.getElementById("players-list").innerHTML = "";
   });
 </script>
 
