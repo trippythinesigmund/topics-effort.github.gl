@@ -2,109 +2,104 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Minecraft Server Status Checker</title>
+  <title>Minecraft Server Status</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      padding: 50px;
-      transition: background-color 0.3s;
-    }
-    h1 {
-      margin-bottom: 0;
-    }
-    h4 {
-      margin-top: 5px;
-      color: rgba(0,0,0,0.48);
-      font-weight: normal;
-    }
-    #status {
-      font-size: 24px;
-      margin-top: 30px;
-    }
-    #players-count {
-      font-size: 20px;
-      margin-top: 10px;
-    }
-    #updated {
-      margin-top: 15px;
-      font-size: 14px;
-      color: rgba(0,0,0,0.5);
-    }
-    ul {
-      list-style: none;
-      padding: 0;
-    }
+    body { font-family: Arial, sans-serif; text-align: center; padding: 50px; transition: background-color 0.3s; background-color: #f4f4f4; }
+    .box { background: white; padding: 30px; border-radius: 12px; display: inline-block; box-shadow: 0 4px 15px rgba(0,0,0,0.1); min-width: 320px; vertical-align: top; margin: 10px; }
+    input { padding: 10px; margin: 5px auto; border-radius: 5px; border: 1px solid #ccc; width: 80%; display: block; }
+    button { padding: 10px 20px; background: #3498db; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+    button:hover { background: #2980b9; }
+    #status { font-size: 24px; margin-top: 10px; font-weight: bold; }
+    #updated { margin-top: 15px; font-size: 13px; color: gray; }
+    .ip-box { background: #333; color: #fff; padding: 15px; border-radius: 8px; margin-top: 20px; display: none; }
+    .error { color: #e74c3c; font-size: 12px; margin-top: 5px; }
+    ul { list-style: none; padding: 0; }
   </style>
 </head>
 <body>
 
-<h1>Minecraft Server Status Checker</h1>
-<h4>(for pul's server)</h4>
+  <h1>Server Dashboard</h1>
 
-<p id="status">Checking server...</p>
-<p id="players-count"></p>
-<ul id="players-list"></ul>
-<p id="updated"></p>
+  <div class="box">
+    <h3>Server Status</h3>
+    <div id="status">Checking...</div>
+    <div id="players-count"></div>
+    <ul id="players-list"></ul>
+    <div id="updated"></div>
+  </div>
+
+  <div class="box" id="lock-container">
+    <h3>Reveal Server IP</h3>
+    <div id="login-fields">
+      <input type="text" id="user-name" placeholder="Name">
+      <input type="password" id="user-pass" placeholder="Password">
+      <button onclick="revealIP()">Unlock IP</button>
+      <p id="login-error" class="error"></p>
+    </div>
+    
+    <div id="ip-display-area" class="ip-box">
+      <strong>IP:</strong> <span id="display-ip"></span>
+    </div>
+  </div>
 
 <script>
-// --- CONFIGURATION ---
-// PASTE YOUR CLOUDFLARE WORKER URL HERE
 const WORKER_URL = "https://wandering-band-bb01.pahpahpalll.workers.dev/"; 
-const REFRESH_TIME = 60000; // 1 minute
 
-function updateTime() {
-  const now = new Date();
-  document.getElementById("updated").textContent =
-    "Last updated: " + now.toLocaleTimeString();
-}
-
-function checkServer() {
-  // We now fetch from the Worker, not the MCStatus API directly
+// 1. Automatic Status Check (Runs on load)
+function checkPublicStatus() {
   fetch(WORKER_URL)
-    .then(res => {
-      if (!res.ok) throw new Error("Worker Error");
-      return res.json();
-    })
-    .then(data => {
-      const status = document.getElementById("status");
-      const count = document.getElementById("players-count");
-      const list = document.getElementById("players-list");
-
-      if (data.online) {
-        document.body.style.backgroundColor = "#d4f8d4";
-        status.textContent = "🟢 Server is ONLINE";
-        count.textContent =
-          `Players: ${data.players.online} / ${data.players.max}`;
-
-        list.innerHTML = "";
-        if (data.players.list && data.players.list.length > 0) {
-          data.players.list.forEach(p => {
-            const li = document.createElement("li");
-            li.textContent = p.name;
-            list.appendChild(li);
-          });
-        } else {
-          list.innerHTML = "<li>No players online</li>";
-        }
-      } else {
-        throw new Error("offline");
-      }
-
-      updateTime();
-    })
-    .catch((err) => {
-      console.error(err); // Helps debug if the worker fails
-      document.body.style.backgroundColor = "#f8d4d4";
-      document.getElementById("status").textContent = "🔴 Server is OFFLINE";
-      document.getElementById("players-count").textContent = "";
-      document.getElementById("players-list").innerHTML = "";
-      updateTime();
-    });
+    .then(res => res.json())
+    .then(data => updateUI(data))
+    .catch(err => console.error("Status check failed", err));
 }
 
-checkServer();                      // first load
-setInterval(checkServer, REFRESH_TIME); // auto refresh
+// 2. Manual IP Reveal
+function revealIP() {
+  const nameInput = document.getElementById("user-name").value;
+  const passInput = document.getElementById("user-pass").value;
+
+  fetch(WORKER_URL, {
+    headers: {
+      "X-Access-Name": nameInput,
+      "X-Access-Pass": passInput
+    }
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.real_ip) {
+      document.getElementById("login-fields").style.display = "none";
+      document.getElementById("ip-display-area").style.display = "block";
+      document.getElementById("display-ip").textContent = data.real_ip;
+    } else {
+      document.getElementById("login-error").textContent = "Wrong name or password.";
+    }
+  });
+}
+
+function updateUI(data) {
+  const status = document.getElementById("status");
+  const count = document.getElementById("players-count");
+  const list = document.getElementById("players-list");
+
+  if (data.online) {
+    document.body.style.backgroundColor = "#d4f8d4";
+    status.textContent = "🟢 ONLINE";
+    count.textContent = `Players: ${data.players.online} / ${data.players.max}`;
+    list.innerHTML = data.players.list?.length > 0 
+      ? data.players.list.map(p => `<li>${p.name}</li>`).join('') 
+      : "<li>No players online</li>";
+  } else {
+    document.body.style.backgroundColor = "#f8d4d4";
+    status.textContent = "🔴 OFFLINE";
+    count.textContent = "";
+    list.innerHTML = "";
+  }
+  document.getElementById("updated").textContent = "Updated: " + new Date().toLocaleTimeString();
+}
+
+// Start everything
+checkPublicStatus();
+setInterval(checkPublicStatus, 60000);
 </script>
 
 </body>
