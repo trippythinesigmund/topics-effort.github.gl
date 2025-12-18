@@ -48,7 +48,9 @@
 <p id="updated"></p>
 
 <script>
-const serverIP = "topics-effort.gl.joinmc.link"; // change this
+// --- CONFIGURATION ---
+// PASTE YOUR CLOUDFLARE WORKER URL HERE
+const WORKER_URL = "https://wandering-band-bb01.pahpahpalll.workers.dev/"; 
 const REFRESH_TIME = 60000; // 1 minute
 
 function updateTime() {
@@ -58,8 +60,12 @@ function updateTime() {
 }
 
 function checkServer() {
-  fetch(`https://api.mcstatus.io/v2/status/java/${serverIP}`)
-    .then(res => res.json())
+  // We now fetch from the Worker, not the MCStatus API directly
+  fetch(WORKER_URL)
+    .then(res => {
+      if (!res.ok) throw new Error("Worker Error");
+      return res.json();
+    })
     .then(data => {
       const status = document.getElementById("status");
       const count = document.getElementById("players-count");
@@ -87,7 +93,8 @@ function checkServer() {
 
       updateTime();
     })
-    .catch(() => {
+    .catch((err) => {
+      console.error(err); // Helps debug if the worker fails
       document.body.style.backgroundColor = "#f8d4d4";
       document.getElementById("status").textContent = "🔴 Server is OFFLINE";
       document.getElementById("players-count").textContent = "";
