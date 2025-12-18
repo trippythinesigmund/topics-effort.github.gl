@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Minecraft Server Status</title>
+</head>
+<body>
+
+<h1>Minecraft Server</h1>
+
+<p id="status">Checking status...</p>
+<p id="players"></p>
+
+<script>
+const serverIP = "topics-effort.gl.joinmc.link"; // change this
+
+fetch(`https://api.mcstatus.io/v2/status/java/${serverIP}`)
+  .then(res => res.json())
+  .then(data => {
+    if (data.online) {
+      document.getElementById("status").textContent = "🟢 Server is ONLINE";
+      document.getElementById("players").textContent =
+        `Players: ${data.players.online} / ${data.players.max}`;
+    } else {
+      document.getElementById("status").textContent = "🔴 Server is OFFLINE";
+    }
+  })
+  .catch(() => {
+    document.getElementById("status").textContent = "🔴 Server is OFFLINE";
+  });
+</script>
+
+</body>
+</html>
