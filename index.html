@@ -6,8 +6,10 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      padding: 20px;
-      background-color: #f0f0f0;
+      text-align: center; /* center all text */
+      padding: 50px;
+      transition: background-color 0.3s;
+      color: #000;
     }
     h1 {
       margin-bottom: 0;
@@ -17,15 +19,18 @@
       color: rgba(0,0,0,0.48); /* greyed out */
       font-weight: normal;
     }
-    #status-box {
-      margin-top: 20px;
-      padding: 15px;
-      border-radius: 10px;
-      transition: background-color 0.3s;
+    #status {
+      font-size: 24px;
+      margin-top: 30px;
+    }
+    #players-count {
+      margin-top: 10px;
+      font-size: 20px;
     }
     #players-list {
       margin-top: 10px;
-      padding-left: 20px;
+      padding-left: 0;
+      list-style-type: none;
     }
   </style>
 </head>
@@ -34,55 +39,53 @@
 <h1>Minecraft Server Status Checker</h1>
 <h4>(for pul's server)</h4>
 
-<div id="status-box">
-  <p id="status">Checking server...</p>
-  <p id="players-count"></p>
-  <ul id="players-list"></ul>
-</div>
+<p id="status">Checking server...</p>
+<p id="players-count"></p>
+<ul id="players-list"></ul>
 
 <script>
-const serverIP = "YOUR_SERVER_IP_OR_HOSTNAME:25565"; // replace this with your server
+const serverIP = "YOUR_SERVER_IP_OR_HOSTNAME:25565"; // replace with your server
 
-fetch(`https://api.mcstatus.io/v2/status/java/${serverIP}`)
-  .then(res => res.json())
-  .then(data => {
-    const statusBox = document.getElementById("status-box");
+function updateStatus(data) {
+    const body = document.body;
     const statusText = document.getElementById("status");
     const playersCount = document.getElementById("players-count");
     const playersList = document.getElementById("players-list");
-    
-    if(data.online) {
-      statusBox.style.backgroundColor = "#d4f8d4"; // light green
-      statusText.textContent = "🟢 Server is ONLINE";
-      
-      playersCount.textContent = `Players: ${data.players.online} / ${data.players.max}`;
-      
-      // Show player names if available
-      playersList.innerHTML = "";
-      if(data.players.list && data.players.list.length > 0) {
-        data.players.list.forEach(player => {
-          const li = document.createElement("li");
-          li.textContent = player.name;
-          playersList.appendChild(li);
-        });
-      } else {
-        playersList.innerHTML = "<li>No players online</li>";
-      }
-      
+
+    if (data.online) {
+        body.style.backgroundColor = "#d4f8d4"; // light green
+        statusText.textContent = "🟢 Server is ONLINE";
+        playersCount.textContent = `Players: ${data.players.online} / ${data.players.max}`;
+
+        playersList.innerHTML = "";
+        if (data.players.list && data.players.list.length > 0) {
+            data.players.list.forEach(player => {
+                const li = document.createElement("li");
+                li.textContent = player.name;
+                playersList.appendChild(li);
+            });
+        } else {
+            playersList.innerHTML = "<li>No players online</li>";
+        }
+
     } else {
-      statusBox.style.backgroundColor = "#f8d4d4"; // light red
-      statusText.textContent = "🔴 Server is OFFLINE";
-      playersCount.textContent = "";
-      playersList.innerHTML = "";
+        body.style.backgroundColor = "#f8d4d4"; // light red
+        statusText.textContent = "🔴 Server is OFFLINE";
+        playersCount.textContent = "";
+        playersList.innerHTML = "";
     }
-  })
-  .catch(() => {
-    const statusBox = document.getElementById("status-box");
-    statusBox.style.backgroundColor = "#f8d4d4";
-    document.getElementById("status").textContent = "🔴 Server is OFFLINE";
-    document.getElementById("players-count").textContent = "";
-    document.getElementById("players-list").innerHTML = "";
-  });
+}
+
+fetch(`https://api.mcstatus.io/v2/status/java/${serverIP}`)
+    .then(res => res.json())
+    .then(updateStatus)
+    .catch(() => {
+        const body = document.body;
+        body.style.backgroundColor = "#f8d4d4"; // light red
+        document.getElementById("status").textContent = "🔴 Server is OFFLINE";
+        document.getElementById("players-count").textContent = "";
+        document.getElementById("players-list").innerHTML = "";
+    });
 </script>
 
 </body>
