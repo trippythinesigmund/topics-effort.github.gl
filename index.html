@@ -2,105 +2,110 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Minecraft Server Status</title>
+  <title>Minecraft Server Dashboard</title>
   <style>
-    body { font-family: Arial, sans-serif; text-align: center; padding: 50px; transition: background-color 0.3s; background-color: #f4f4f4; }
-    .box { background: white; padding: 30px; border-radius: 12px; display: inline-block; box-shadow: 0 4px 15px rgba(0,0,0,0.1); min-width: 320px; vertical-align: top; margin: 10px; }
-    input { padding: 10px; margin: 5px auto; border-radius: 5px; border: 1px solid #ccc; width: 80%; display: block; }
-    button { padding: 10px 20px; background: #3498db; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
-    button:hover { background: #2980b9; }
-    #status { font-size: 24px; margin-top: 10px; font-weight: bold; }
-    #updated { margin-top: 15px; font-size: 13px; color: gray; }
-    .ip-box { background: #333; color: #fff; padding: 15px; border-radius: 8px; margin-top: 20px; display: none; }
-    .error { color: #e74c3c; font-size: 12px; margin-top: 5px; }
+    body { font-family: 'Segoe UI', sans-serif; text-align: center; padding: 40px; transition: background-color 0.4s; background-color: #f0f2f5; color: #333; }
+    .container { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; max-width: 900px; margin: 0 auto; }
+    .box { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 8px 24px rgba(0,0,0,0.1); min-width: 320px; flex: 1; }
+    input { padding: 12px; margin: 15px auto; border-radius: 8px; border: 1px solid #ddd; width: 85%; display: block; text-align: center; }
+    button { padding: 12px 24px; background: #3498db; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; width: 93%; }
+    #status { font-size: 28px; margin: 15px 0; font-weight: 800; }
+    .ip-box { background: #2c3e50; color: #ecf0f1; padding: 15px; border-radius: 10px; margin-top: 10px; display: none; text-align: left; }
+    .ip-line { margin: 10px 0; font-family: monospace; }
+    .copy-btn { padding: 4px 8px; font-size: 0.7rem; margin-left: 10px; background: #7f8c8d; border:none; color:white; border-radius:4px; cursor:pointer;}
+    .error { color: #e74c3c; font-size: 13px; margin-top: 10px; }
     ul { list-style: none; padding: 0; }
+    li { background: #f8f9fa; margin: 4px 0; padding: 8px; border-radius: 5px; }
   </style>
 </head>
 <body>
 
   <h1>Server Dashboard</h1>
 
-  <div class="box">
-    <h3>Server Status</h3>
-    <div id="status">Checking...</div>
-    <div id="players-count"></div>
-    <ul id="players-list"></ul>
-    <div id="updated"></div>
-  </div>
-
-  <div class="box" id="lock-container">
-    <h3>Reveal Server IP</h3>
-    <div id="login-fields">
-      <input type="text" id="user-name" placeholder="Name">
-      <input type="password" id="user-pass" placeholder="Password">
-      <button onclick="revealIP()">Unlock IP</button>
-      <p id="login-error" class="error"></p>
+  <div class="container">
+    <div class="box">
+      <h3>Java Server Status</h3>
+      <div id="status">Checking...</div>
+      <div id="players-count"></div>
+      <ul id="players-list"></ul>
+      <div id="updated" style="font-size: 12px; color: gray; margin-top: 10px;"></div>
     </div>
-    
-    <div id="ip-display-area" class="ip-box">
-      <strong>IP:</strong> <span id="display-ip"></span>
+
+    <div class="box">
+      <h3>Access Server IPs</h3>
+      <div id="unlock-ui">
+        <p style="font-size: 0.95rem; color: #555;">What is the last name of the person hosting this server?</p>
+        <input type="text" id="answer-input" placeholder="Type answer here...">
+        <button onclick="unlock()">Reveal IPs</button>
+        <p id="error-msg" class="error"></p>
+      </div>
+
+      <div id="ip-ui" class="ip-box">
+        <div class="ip-line"><strong>JAVA:</strong> <span id="j-ip"></span> <button class="copy-btn" onclick="copy('j-ip')">Copy</button></div>
+        <div class="ip-line"><strong>BEDROCK:</strong> <span id="b-ip"></span> <button class="copy-btn" onclick="copy('b-ip')">Copy</button></div>
+        <div class="ip-line"><strong>PORT:</strong> <span id="b-port"></span> <button class="copy-btn" onclick="copy('b-port')">Copy</button></div>
+        <button style="background:#95a5a6; margin-top:10px;" onclick="logout()">Lock Again</button>
+      </div>
     </div>
   </div>
 
 <script>
 const WORKER_URL = "https://wandering-band-bb01.pahpahpalll.workers.dev/"; 
 
-// 1. Automatic Status Check (Runs on load)
-function checkPublicStatus() {
-  fetch(WORKER_URL)
-    .then(res => res.json())
-    .then(data => updateUI(data))
-    .catch(err => console.error("Status check failed", err));
+window.onload = () => {
+  refreshStatus();
+  const saved = localStorage.getItem("mc_key");
+  if (saved) attemptUnlock(saved, true);
+};
+
+function refreshStatus() {
+  fetch(WORKER_URL).then(r => r.json()).then(data => updateUI(data));
 }
 
-// 2. Manual IP Reveal
-function revealIP() {
-  const nameInput = document.getElementById("user-name").value;
-  const passInput = document.getElementById("user-pass").value;
+function unlock() {
+  const val = document.getElementById("answer-input").value;
+  attemptUnlock(val, false);
+}
 
-  fetch(WORKER_URL, {
-    headers: {
-      "X-Access-Name": nameInput,
-      "X-Access-Pass": passInput
-    }
-  })
-  .then(res => res.json())
+function attemptUnlock(key, isAuto) {
+  fetch(WORKER_URL, { headers: { "X-Access-Key": key } })
+  .then(r => r.json())
   .then(data => {
-    if (data.real_ip) {
-      document.getElementById("login-fields").style.display = "none";
-      document.getElementById("ip-display-area").style.display = "block";
-      document.getElementById("display-ip").textContent = data.real_ip;
-    } else {
-      document.getElementById("login-error").textContent = "Wrong name or password.";
+    if (data.authorized) {
+      localStorage.setItem("mc_key", key);
+      document.getElementById("unlock-ui").style.display = "none";
+      document.getElementById("ip-ui").style.display = "block";
+      document.getElementById("j-ip").textContent = data.ips.java;
+      document.getElementById("b-ip").textContent = data.ips.bedrock;
+      document.getElementById("b-port").textContent = data.ips.port;
+      updateUI(data);
+    } else if (!isAuto) {
+      document.getElementById("error-msg").textContent = "Incorrect answer. Try again.";
     }
   });
 }
 
 function updateUI(data) {
-  const status = document.getElementById("status");
-  const count = document.getElementById("players-count");
-  const list = document.getElementById("players-list");
-
+  const s = document.getElementById("status");
   if (data.online) {
-    document.body.style.backgroundColor = "#d4f8d4";
-    status.textContent = "🟢 ONLINE";
-    count.textContent = `Players: ${data.players.online} / ${data.players.max}`;
-    list.innerHTML = data.players.list?.length > 0 
-      ? data.players.list.map(p => `<li>${p.name}</li>`).join('') 
-      : "<li>No players online</li>";
+    document.body.style.backgroundColor = "#e8f5e9";
+    s.innerHTML = "<span style='color:#27ae60'>● ONLINE</span>";
+    document.getElementById("players-count").textContent = `Players: ${data.players.online}/${data.players.max}`;
+    document.getElementById("players-list").innerHTML = data.players.list?.map(p => `<li>${p.name}</li>`).join('') || "<li>No players</li>";
   } else {
-    document.body.style.backgroundColor = "#f8d4d4";
-    status.textContent = "🔴 OFFLINE";
-    count.textContent = "";
-    list.innerHTML = "";
+    document.body.style.backgroundColor = "#ffebee";
+    s.innerHTML = "<span style='color:#e74c3c'>● OFFLINE</span>";
   }
-  document.getElementById("updated").textContent = "Updated: " + new Date().toLocaleTimeString();
+  document.getElementById("updated").textContent = "Last sync: " + new Date().toLocaleTimeString();
 }
 
-// Start everything
-checkPublicStatus();
-setInterval(checkPublicStatus, 60000);
-</script>
+function copy(id) {
+  navigator.clipboard.writeText(document.getElementById(id).textContent);
+  alert("Copied to clipboard!");
+}
 
+function logout() { localStorage.clear(); location.reload(); }
+setInterval(refreshStatus, 60000);
+</script>
 </body>
 </html>
