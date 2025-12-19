@@ -1,0 +1,63 @@
+body { 
+  /* This is the Minecraft font */
+  font-family: 'Minecraftia', sans-serif; 
+  text-align: center; 
+  padding: 40px; 
+  transition: background-color 0.4s; 
+  background-color: #f0f2f5; 
+  color: #333;
+  /* Adds that classic MC text shadow */
+  text-shadow: 2px 2px #bababa; 
+}
+
+/* Make titles stand out */
+h1, h3 {
+  text-shadow: 3px 3px #00000022;
+  color: #2c3e50;
+}
+
+.box { 
+  background: white; 
+  padding: 25px; 
+  border-radius: 0px; /* Minecraft is blocky, so we use 0 for sharp corners */
+  border: 4px solid #333; 
+  box-shadow: 8px 8px 0px #00000022; 
+  min-width: 320px; 
+  flex: 1; 
+}
+
+input { 
+  font-family: 'Minecraftia', sans-serif;
+  padding: 12px; 
+  margin: 15px auto; 
+  border: 2px solid #333;
+  width: 85%; 
+  display: block; 
+  text-align: center; 
+}
+
+button { 
+  font-family: 'Minecraftia', sans-serif;
+  padding: 12px 24px; 
+  background: #5ea81e; /* Classic Minecraft Green */
+  color: white; 
+  border: none; 
+  border-bottom: 4px solid #38761d; /* Shadow on button */
+  cursor: pointer; 
+  width: 93%; 
+}
+
+button:active {
+  border-bottom: 0px;
+  transform: translateY(4px);
+}
+
+.ip-box { 
+  background: #1e1e1e; 
+  color: #55ff55; /* Classic Minecraft Lime Green for IPs */
+  padding: 15px; 
+  margin-top: 10px; 
+  display: none; 
+  text-align: left; 
+  border: 2px solid #555;
+}
