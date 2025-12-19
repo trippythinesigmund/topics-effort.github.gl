@@ -1,31 +1,40 @@
+/* THE BASE LOOK */
 body { 
-  /* This is the Minecraft font */
   font-family: 'Minecraftia', sans-serif; 
   text-align: center; 
   padding: 40px; 
   transition: background-color 0.4s; 
   background-color: #f0f2f5; 
   color: #333;
-  /* Adds that classic MC text shadow */
   text-shadow: 2px 2px #bababa; 
 }
 
-/* Make titles stand out */
 h1, h3 {
   text-shadow: 3px 3px #00000022;
   color: #2c3e50;
 }
 
+.container { 
+  display: flex; 
+  flex-wrap: wrap; 
+  justify-content: center; 
+  gap: 20px; 
+  max-width: 900px; 
+  margin: 0 auto; 
+}
+
+/* THE BOXES */
 .box { 
   background: white; 
   padding: 25px; 
-  border-radius: 0px; /* Minecraft is blocky, so we use 0 for sharp corners */
+  border-radius: 0px; 
   border: 4px solid #333; 
   box-shadow: 8px 8px 0px #00000022; 
   min-width: 320px; 
   flex: 1; 
 }
 
+/* INPUTS & LISTS */
 input { 
   font-family: 'Minecraftia', sans-serif;
   padding: 12px; 
@@ -36,15 +45,20 @@ input {
   text-align: center; 
 }
 
-button { 
+ul { list-style: none; padding: 0; }
+li { background: #f8f9fa; margin: 4px 0; padding: 8px; border: 1px solid #ddd; }
+
+/* THE BUTTONS */
+button, #reveal-btn { 
   font-family: 'Minecraftia', sans-serif;
   padding: 12px 24px; 
-  background: #5ea81e; /* Classic Minecraft Green */
+  background: #5ea81e; 
   color: white; 
   border: none; 
-  border-bottom: 4px solid #38761d; /* Shadow on button */
+  border-bottom: 4px solid #38761d; 
   cursor: pointer; 
   width: 93%; 
+  transition: all 0.1s ease;
 }
 
 button:active {
@@ -52,12 +66,31 @@ button:active {
   transform: translateY(4px);
 }
 
+/* WRONG PASSWORD EFFECT */
+#reveal-btn.error-btn { 
+  background: #e74c3c !important; 
+  border-bottom-color: #992d22;
+  animation: shake 0.2s ease-in-out 0s 2;
+}
+
+@keyframes shake {
+  0% { transform: translateX(0); }
+  25% { transform: translateX(5px); }
+  75% { transform: translateX(-5px); }
+  100% { transform: translateX(0); }
+}
+
+/* THE IP BOX */
 .ip-box { 
   background: #1e1e1e; 
-  color: #55ff55; /* Classic Minecraft Lime Green for IPs */
+  color: #55ff55; 
   padding: 15px; 
   margin-top: 10px; 
   display: none; 
   text-align: left; 
   border: 2px solid #555;
+  text-shadow: none;
 }
+
+#status { font-size: 24px; margin: 15px 0; font-weight: 800; }
+.copy-btn { padding: 4px 8px; font-size: 0.7rem; margin-left: 10px; background: #7f8c8d; border:none; color:white; border-radius:0px; cursor:pointer;}
