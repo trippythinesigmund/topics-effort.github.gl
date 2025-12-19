@@ -8,12 +8,30 @@
     .container { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; max-width: 900px; margin: 0 auto; }
     .box { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 8px 24px rgba(0,0,0,0.1); min-width: 320px; flex: 1; }
     input { padding: 12px; margin: 15px auto; border-radius: 8px; border: 1px solid #ddd; width: 85%; display: block; text-align: center; }
-    button { padding: 12px 24px; background: #3498db; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; width: 93%; }
+    
+    /* Reveal Button Styles */
+    #reveal-btn { 
+      padding: 12px 24px; background: #3498db; color: white; border: none; 
+      border-radius: 8px; cursor: pointer; font-weight: bold; width: 93%; 
+      transition: all 0.2s ease; 
+    }
+    #reveal-btn.error-btn { 
+      background: #e74c3c !important; 
+      transform: scale(0.95);
+      animation: shake 0.2s ease-in-out 0s 2;
+    }
+
+    @keyframes shake {
+      0% { margin-left: 0rem; }
+      25% { margin-left: 0.5rem; }
+      75% { margin-left: -0.5rem; }
+      100% { margin-left: 0rem; }
+    }
+
     #status { font-size: 28px; margin: 15px 0; font-weight: 800; }
     .ip-box { background: #2c3e50; color: #ecf0f1; padding: 15px; border-radius: 10px; margin-top: 10px; display: none; text-align: left; }
     .ip-line { margin: 10px 0; font-family: monospace; }
     .copy-btn { padding: 4px 8px; font-size: 0.7rem; margin-left: 10px; background: #7f8c8d; border:none; color:white; border-radius:4px; cursor:pointer;}
-    .error { color: #e74c3c; font-size: 13px; margin-top: 10px; }
     ul { list-style: none; padding: 0; }
     li { background: #f8f9fa; margin: 4px 0; padding: 8px; border-radius: 5px; }
   </style>
@@ -36,21 +54,20 @@
       <div id="unlock-ui">
         <p style="font-size: 0.95rem; color: #555;">What is the last name of the person hosting this server?</p>
         <input type="text" id="answer-input" placeholder="Type answer here...">
-        <button onclick="unlock()">Reveal IPs</button>
-        <p id="error-msg" class="error"></p>
+        <button id="reveal-btn" onclick="unlock()">Reveal IPs</button>
       </div>
 
       <div id="ip-ui" class="ip-box">
         <div class="ip-line"><strong>JAVA:</strong> <span id="j-ip"></span> <button class="copy-btn" onclick="copy('j-ip')">Copy</button></div>
         <div class="ip-line"><strong>BEDROCK:</strong> <span id="b-ip"></span> <button class="copy-btn" onclick="copy('b-ip')">Copy</button></div>
         <div class="ip-line"><strong>PORT:</strong> <span id="b-port"></span> <button class="copy-btn" onclick="copy('b-port')">Copy</button></div>
-        <button style="background:#95a5a6; margin-top:10px;" onclick="logout()">Lock Again</button>
+        <button style="background:#95a5a6; margin-top:10px; width:100%; border:none; color:white; padding:10px; border-radius:8px; cursor:pointer;" onclick="logout()">Lock Again</button>
       </div>
     </div>
   </div>
 
 <script>
-const WORKER_URL = "https://wandering-band-bb01.pahpahpalll.workers.dev/"; 
+const WORKER_URL = "YOUR_WORKER_URL_HERE"; 
 
 window.onload = () => {
   refreshStatus();
@@ -68,6 +85,8 @@ function unlock() {
 }
 
 function attemptUnlock(key, isAuto) {
+  const btn = document.getElementById("reveal-btn");
+
   fetch(WORKER_URL, { headers: { "X-Access-Key": key } })
   .then(r => r.json())
   .then(data => {
@@ -80,28 +99,42 @@ function attemptUnlock(key, isAuto) {
       document.getElementById("b-port").textContent = data.ips.port;
       updateUI(data);
     } else if (!isAuto) {
-      document.getElementById("error-msg").textContent = "Incorrect answer. Try again.";
+      // Trigger Red/Pressed Effect
+      btn.classList.add("error-btn");
+      btn.textContent = "Wrong Answer!";
+      
+      // Reset after 1 second
+      setTimeout(() => {
+        btn.classList.remove("error-btn");
+        btn.textContent = "Reveal IPs";
+      }, 1000);
     }
   });
 }
 
 function updateUI(data) {
   const s = document.getElementById("status");
+  const countDisplay = document.getElementById("players-count");
+  const listDisplay = document.getElementById("players-list");
+
   if (data.online) {
     document.body.style.backgroundColor = "#e8f5e9";
     s.innerHTML = "<span style='color:#27ae60'>● ONLINE</span>";
-    document.getElementById("players-count").textContent = `Players: ${data.players.online}/${data.players.max}`;
-    document.getElementById("players-list").innerHTML = data.players.list?.map(p => `<li>${p.name}</li>`).join('') || "<li>No players</li>";
+    countDisplay.textContent = `Players: ${data.players.online}/${data.players.max}`;
+    listDisplay.innerHTML = data.players.list?.map(p => `<li>${p.name}</li>`).join('') || "<li>No players</li>";
   } else {
+    // RESET UI ON OFFLINE
     document.body.style.backgroundColor = "#ffebee";
     s.innerHTML = "<span style='color:#e74c3c'>● OFFLINE</span>";
+    countDisplay.textContent = "Players: 0/0"; // Forces it to reset
+    listDisplay.innerHTML = ""; // Clears the names
   }
   document.getElementById("updated").textContent = "Last sync: " + new Date().toLocaleTimeString();
 }
 
 function copy(id) {
   navigator.clipboard.writeText(document.getElementById(id).textContent);
-  alert("Copied to clipboard!");
+  alert("Copied!");
 }
 
 function logout() { localStorage.clear(); location.reload(); }
